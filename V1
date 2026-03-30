@@ -1,0 +1,706 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Preview app eclipse 2026</title>
+  <style>
+    body { font-family: Arial, sans-serif; margin: 0; background: #f4f6fb; color: #1d2742; }
+    .wrap { max-width: 1160px; margin: 0 auto; padding: 24px; }
+    .card { background: #ffffff; border: 1px solid #d8e0f0; border-radius: 16px; padding: 20px; box-shadow: 0 10px 30px rgba(22,32,72,.08); }
+    h1, h2 { margin-top: 0; }
+    .grid { display: grid; grid-template-columns: 1.1fr .9fr; gap: 20px; }
+    .topbar { display:grid; grid-template-columns: 1fr auto auto; gap:10px; align-items:center; }
+    .controls { display: grid; grid-template-columns: 1fr auto; gap: 10px; margin-bottom: 8px; }
+    .hero { min-height: 320px; display: flex; align-items: center; justify-content: center; border-radius: 16px; background: radial-gradient(circle at center, rgba(255,215,106,.13), rgba(11,16,32,.85)); position: relative; overflow: hidden; }
+    .kpi { display: grid; grid-template-columns: repeat(2, 1fr); gap: 12px; margin-top: 14px; }
+    .pill { background: #f7f9fe; border: 1px solid #d7e0f2; border-radius: 14px; padding: 12px; }
+    .badge { display:inline-block; padding:6px 10px; border-radius:999px; border:1px solid #d3dcef; background:#f6f8fd; color:#33415f; }
+    .playbtn { cursor:pointer; min-width: 150px; }
+    table { width: 100%; border-collapse: collapse; }
+    th, td { padding: 10px 8px; border-bottom: 1px solid #e2e8f5; text-align: left; font-size: 14px; }
+    th { color: #42507a; position: sticky; top: 0; background: #ffffff; }
+    input, button { padding: 10px 12px; border-radius: 12px; border: 1px solid #c5d0e8; background: #ffffff; color: #1d2742; }
+    .muted { color: #66759a; }
+    .timeline-card { margin-top:20px; }
+    .event-row.active { background: #eef4ff; }
+    .event-row.done { opacity:.55; }
+    .countdown { font-size: 32px; font-weight: 700; letter-spacing: .04em; }
+    .mini { color:#66759a; font-size:13px; }
+    .progress { height:10px; background:#edf2fb; border:1px solid #d0daef; border-radius:999px; overflow:hidden; }
+    .progress > span { display:block; height:100%; width:0%; background: linear-gradient(90deg, #6f87ff, #ffd76a); }
+    .tablewrap { max-height: 430px; overflow:auto; border-radius: 12px; border: 1px solid #e2e8f5; }
+    .legend { display:flex; flex-wrap:wrap; gap:8px; margin-top:10px; }
+    .legend span { font-size:12px; padding:4px 8px; border-radius:999px; background:#f3f6fc; border:1px solid #d3ddef; color:#42507a; }
+    .imgnote { margin-top:10px; font-size:13px; color:#aeb8db; }
+    .helper { margin-top: 8px; font-size: 13px; color: #66759a; }
+    @media (max-width: 850px) {
+      .grid { grid-template-columns: 1fr; }
+      .topbar { grid-template-columns: 1fr; }
+      .controls { grid-template-columns: 1fr; }
+      .kpi { grid-template-columns: 1fr; }
+    }
+  </style>
+</head>
+<body>
+  <div class="wrap">
+    <h1>App Eclipse Total 12 agosto 2026</h1>
+    <p class="helper">Interfaz en modo claro para mejor visibilidad exterior. La visualización del eclipse mantiene su fondo negro para conservar contraste.</p>
+    <p class="muted">Preview navegable con coordenadas, conversión horaria local, simulación, avisos por voz y representación visual distinta según el porcentaje de eclipse.</p>
+
+    <div class="card" id="topCard">
+      <div class="topbar">
+        <div>
+          <div class="controls">
+            <input id="coords" value="42.526484, -4.131424" aria-label="coordenadas" />
+            <button id="calcBtn">Calcular fases</button>
+          </div>
+          <p class="muted" style="margin:0;">Pega coordenadas tipo Google Maps. El preview ajusta las horas a la zona local detectada para esas coordenadas.</p>
+        </div>
+        <button id="playBtn" class="playbtn">▶ Iniciar simulación</button>
+        <div class="badge" id="liveState">En espera</div>
+      </div>
+      <div class="helper">Ejemplos: España peninsular → Europe/Madrid · Reino Unido → Europe/London · Canarias → Atlantic/Canary.</div>
+      <div class="helper" id="modeInfo">Modo actual: simulación manual. El 12 de agosto de 2026 se activará automáticamente el modo tiempo real.</div>
+      <div id="zoneWarning" style="display:none; margin-top:12px; padding:12px 14px; border-radius:12px; background:#fff4e5; border:1px solid #f0c98a; color:#8a5a12; font-size:14px;"></div>
+      <div style="margin-top:14px;">
+        <div class="mini" style="margin-bottom:8px;">Mini mapa de ubicación</div>
+        <div id="locationMapWrap" style="border:1px solid #d8e0f0; border-radius:14px; overflow:hidden; background:#fff; padding:10px;">
+          <div id="locationMap" style="width:100%; height:220px; border-radius:10px;"></div>
+        </div>
+      </div>
+    </div>
+
+    <div class="grid" style="margin-top:20px;">
+      <div class="card" id="phaseCard">
+        <h2>Fase actual</h2>
+        <div class="hero" id="hero"></div>
+        <div class="imgnote" id="imgNote">Representación visual dinámica de la fase actual.</div>
+        <div class="kpi">
+          <div class="pill"><strong>Estado</strong><br/><span id="kState">Preparado</span></div>
+          <div class="pill"><strong>Hora actual</strong><br/><span id="kNow">--:--:--</span></div>
+          <div class="pill"><strong>Siguiente hito</strong><br/><span id="kNext">C1</span></div>
+          <div class="pill"><strong>Porcentaje</strong><br/><span id="kPct">0%</span></div>
+          <div class="pill"><strong>Altitud solar</strong><br/><span id="kAlt">--°</span></div>
+          <div class="pill"><strong>Azimut solar</strong><br/><span id="kAz">--°</span></div>
+        </div>
+        <div style="margin-top:14px;">
+          <div class="mini" style="margin-bottom:8px;">Mini mapa de dirección</div>
+          <div id="miniMap" style="display:flex; justify-content:center;"></div>
+        </div>
+      </div>
+
+      <div class="card" id="hitosCard">
+        <h2>Hitos principales</h2>
+        <div class="mini" id="tzInfo" style="margin-bottom:10px;">Zona horaria detectada: Europe/Madrid</div>
+        <div class="tablewrap">
+          <table>
+            <thead>
+              <tr><th>Fase</th><th>Hora local</th><th>Detalle</th><th>Estado</th></tr>
+            </thead>
+            <tbody id="timelineBody"></tbody>
+          </table>
+        </div>
+        <div class="legend">
+          <span>25%</span>
+          <span>50%</span>
+          <span>75%</span>
+          <span>85%</span>
+          <span>90%</span>
+          <span>95%</span>
+          <span>C1 / C2 / Máximo / C3 / C4</span>
+        </div>
+      </div>
+    </div>
+
+    <div class="card timeline-card">
+      <h2>Control de reproducción</h2>
+      <div style="display:grid; grid-template-columns: 1fr 1fr; gap:16px; align-items:start;">
+        <div>
+          <div class="mini">Cuenta atrás al siguiente hito</div>
+          <div class="countdown" id="countdown">00:00</div>
+          <div style="margin-top:10px;" class="mini">Siguiente aviso sonoro</div>
+          <div id="nextVoice"><strong>C1</strong> — Comienzo del eclipse parcial</div>
+        </div>
+        <div>
+          <div class="mini">Progreso del recorrido</div>
+          <div class="progress" style="margin-top:8px;"><span id="progressBar"></span></div>
+          <div style="margin-top:10px;" id="currentBlock"><strong>Estado actual:</strong> Preparado para iniciar</div>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js"></script>
+  <link rel="stylesheet" href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css" />
+  <script>
+    var referenceTimeline = [
+      { key: 'C1', minutes: 0, detail: 'Comienzo del eclipse parcial', pct: 0, side: 'entry' },
+      { key: '25%', minutes: 16, detail: 'Cuarto de disco cubierto', pct: 25, side: 'entry' },
+      { key: '50%', minutes: 32, detail: 'Mitad del Sol oculto', pct: 50, side: 'entry' },
+      { key: '75%', minutes: 45, detail: 'Oscurecimiento muy evidente', pct: 75, side: 'entry' },
+      { key: '85%', minutes: 50, detail: 'Cambio de luz acusado', pct: 85, side: 'entry' },
+      { key: '90%', minutes: 53, detail: 'Caída rápida de luminosidad', pct: 90, side: 'entry' },
+      { key: '95%', minutes: 57, detail: 'Minutos decisivos', pct: 95, side: 'entry' },
+      { key: 'C2', minutes: 59, detail: 'Empieza la totalidad', pct: 100, side: 'center' },
+      { key: 'Máximo', minutes: 60, detail: 'Centro del eclipse', pct: 100, side: 'center' },
+      { key: 'C3', minutes: 61, detail: 'Termina la totalidad', pct: 99, side: 'exit' },
+      { key: '95% salida', minutes: 63, detail: 'Regresa la luz con fuerza', pct: 95, side: 'exit' },
+      { key: '90% salida', minutes: 66, detail: 'Fin de la fase extrema', pct: 90, side: 'exit' },
+      { key: '75% salida', minutes: 74, detail: 'Aún muy profundo', pct: 75, side: 'exit' },
+      { key: '50% salida', minutes: 88, detail: 'Mitad del Sol visible', pct: 50, side: 'exit' },
+      { key: '25% salida', minutes: 103, detail: 'Última fase notable', pct: 25, side: 'exit' },
+      { key: 'C4', minutes: 119, detail: 'Fin del eclipse parcial', pct: 0, side: 'exit' }
+    ];
+
+    var anchors = {
+      'Europe/Madrid': '2026-08-12T17:30:00Z',
+      'Europe/London': '2026-08-12T17:30:00Z',
+      'Atlantic/Canary': '2026-08-12T17:30:00Z',
+      'UTC': '2026-08-12T17:30:00Z'
+    };
+
+    var voiceMap = {
+      'C1': 'First contact',
+      '25%': 'Twenty five percent',
+      '50%': 'Fifty percent',
+      '75%': 'Seventy five percent',
+      '85%': 'Eighty five percent',
+      '90%': 'Ninety percent',
+      '95%': 'Ninety five percent',
+      'C2': 'Total eclipse',
+      'Máximo': 'Maximum eclipse',
+      'C3': 'Third contact',
+      '95% salida': 'Ninety five percent egress',
+      '90% salida': 'Ninety percent egress',
+      '75% salida': 'Seventy five percent egress',
+      '50% salida': 'Fifty percent egress',
+      '25% salida': 'Twenty five percent egress',
+      'C4': 'Last contact'
+    };
+
+    var timezone = 'Europe/Madrid';
+    var currentTimeline = [];
+    var useRealTimeMode = false;
+    var simIndex = -1;
+    var running = false;
+    var interval = null;
+    var clockInterval = null;
+    var phaseStartMs = null;
+    var phaseEndMs = null;
+    var lastAnnouncedKey = '';
+
+    var tzInfo = document.getElementById('tzInfo');
+    var coordsInput = document.getElementById('coords');
+    var calcBtn = document.getElementById('calcBtn');
+    var playBtn = document.getElementById('playBtn');
+    var liveState = document.getElementById('liveState');
+    var timelineBody = document.getElementById('timelineBody');
+    var countdownEl = document.getElementById('countdown');
+    var nextVoiceEl = document.getElementById('nextVoice');
+    var currentBlockEl = document.getElementById('currentBlock');
+    var progressBar = document.getElementById('progressBar');
+    var kState = document.getElementById('kState');
+    var kNow = document.getElementById('kNow');
+    var kNext = document.getElementById('kNext');
+    var kPct = document.getElementById('kPct');
+    var hero = document.getElementById('hero');
+    var imgNote = document.getElementById('imgNote');
+    var modeInfo = document.getElementById('modeInfo');
+    var kAlt = document.getElementById('kAlt');
+    var kAz = document.getElementById('kAz');
+    var miniMap = document.getElementById('miniMap');
+    var zoneWarning = document.getElementById('zoneWarning');
+    var locationMap = document.getElementById('locationMap');
+    var leafletMap = null;
+    var leafletMarker = null;
+
+    function parseCoords(value) {
+      var parts = String(value).split(',');
+      if (parts.length < 2) return null;
+      var lat = parseFloat(parts[0].trim());
+      var lon = parseFloat(parts[1].trim());
+      if (isNaN(lat) || isNaN(lon)) return null;
+      return { lat: lat, lon: lon };
+    }
+
+    function detectTimeZone(lat, lon) {
+      if (lat >= 49.8 && lat <= 61.1 && lon >= -8.7 && lon <= 1.8) return 'Europe/London';
+      if (lat >= 27 && lat <= 29.8 && lon >= -18.5 && lon <= -13) return 'Atlantic/Canary';
+      if (lat >= 35 && lat <= 44.5 && lon >= -10 && lon <= 4.5) return 'Europe/Madrid';
+      return Intl.DateTimeFormat().resolvedOptions().timeZone || 'UTC';
+    }
+
+    function isEclipseVisibleAtCoords(lat, lon) {
+      var visibleBoxes = [
+        { minLat: 24.5, maxLat: 31.5, minLon: -19.5, maxLon: -12.0 },
+        { minLat: 35.0, maxLat: 61.5, minLon: -11.5, maxLon: 4.5 }
+      ];
+      for (var i = 0; i < visibleBoxes.length; i++) {
+        var b = visibleBoxes[i];
+        if (lat >= b.minLat && lat <= b.maxLat && lon >= b.minLon && lon <= b.maxLon) return true;
+      }
+      return false;
+    }
+
+    function formatInTZ(date, tz) {
+      return new Intl.DateTimeFormat('es-ES', {
+        timeZone: tz,
+        hour: '2-digit', minute: '2-digit', second: '2-digit', hour12: false
+      }).format(date);
+    }
+
+    function createTimelineForTZ(tz) {
+      var anchorDate = new Date(anchors[tz] || anchors.UTC);
+      var list = [];
+      for (var i = 0; i < referenceTimeline.length; i++) {
+        var item = referenceTimeline[i];
+        var d = new Date(anchorDate.getTime() + item.minutes * 60000);
+        list.push({
+          key: item.key,
+          minutes: item.minutes,
+          detail: item.detail,
+          pct: item.pct,
+          side: item.side,
+          date: d,
+          localTime: formatInTZ(d, tz)
+        });
+      }
+      return list;
+    }
+
+    function speak(text) {
+      try {
+        var u = new SpeechSynthesisUtterance(text);
+        u.lang = 'en-US';
+        window.speechSynthesis.cancel();
+        window.speechSynthesis.speak(u);
+      } catch (e) {}
+    }
+
+    function buildPhaseSVG(percent, side, label) {
+      var p = Math.max(0, Math.min(100, percent));
+      var totality = side === 'center' || label === 'C2' || label === 'Máximo';
+      var glowOpacity = totality ? 1 : 0.65;
+      var sunRadius = totality ? 62 : 70;
+      var corona = '';
+      var rays = '';
+
+      if (p >= 95 && !totality) {
+        rays = '<circle cx="200" cy="160" r="86" fill="none" stroke="rgba(255,220,140,.18)" stroke-width="16" filter="url(#blur)" />';
+      }
+
+      if (totality) {
+        corona = '<circle cx="200" cy="160" r="68" fill="none" stroke="rgba(255,255,255,.95)" stroke-width="10" filter="url(#blur)" />' +
+                 '<circle cx="200" cy="160" r="88" fill="none" stroke="rgba(255,220,140,.45)" stroke-width="18" filter="url(#blur)" />' +
+                 '<circle cx="200" cy="160" r="104" fill="none" stroke="rgba(255,255,255,.22)" stroke-width="24" filter="url(#blur)" />';
+      }
+
+      var progress = Math.max(0, Math.min(0.999, p / 100));
+      var magnitude = 150 * Math.pow(1 - progress, 1.4);
+      var offset = 0;
+      if (!totality) {
+        offset = side === 'exit' ? -magnitude : magnitude;
+      }
+
+      return '<svg viewBox="0 0 400 320" width="100%" height="100%" aria-label="Fase ' + label + '">' +
+             '<defs>' +
+             '<filter id="blur"><feGaussianBlur stdDeviation="6" /></filter>' +
+             '<radialGradient id="sunGlow" cx="50%" cy="50%" r="50%">' +
+             '<stop offset="0%" stop-color="#fff0a8" />' +
+             '<stop offset="70%" stop-color="#ffd25b" />' +
+             '<stop offset="100%" stop-color="#ffb100" />' +
+             '</radialGradient>' +
+             '</defs>' +
+             '<rect width="400" height="320" fill="#0b1020" />' +
+             rays +
+             '<circle cx="200" cy="160" r="' + sunRadius + '" fill="url(#sunGlow)" filter="url(#blur)" opacity="' + glowOpacity + '" />' +
+             corona +
+             '<circle cx="' + (200 + offset) + '" cy="160" r="73" fill="#0b1020" />' +
+             '<text x="200" y="280" text-anchor="middle" fill="#3a4666" font-size="22" font-family="Arial">' + label + ' — ' + Math.round(p) + '%</text>' +
+             '</svg>';
+    }
+
+    function setPhaseVisual(label, pct, nextLabel, side) {
+      hero.innerHTML = buildPhaseSVG(pct, side || 'entry', label);
+      if (label === 'C2' || label === 'Máximo') {
+        imgNote.textContent = 'Imagen de totalidad o máximo eclipse.';
+      } else if ((side || 'entry') === 'exit') {
+        imgNote.textContent = 'Fase de salida: la Luna se retira por el lado opuesto.';
+      } else if (pct >= 75) {
+        imgNote.textContent = 'Imagen avanzada del eclipse, muy cerca de la totalidad.';
+      } else if (pct >= 50) {
+        imgNote.textContent = 'Imagen intermedia del eclipse.';
+      } else if (pct >= 25) {
+        imgNote.textContent = 'Imagen de eclipse parcial temprano.';
+      } else {
+        imgNote.textContent = 'Imagen de fase inicial o final del eclipse.';
+      }
+      kState.textContent = label;
+      kNext.textContent = nextLabel || 'Sin siguiente hito';
+      kPct.textContent = Math.round(pct) + '%';
+    }
+
+    function renderTimeline() {
+      timelineBody.innerHTML = '';
+      for (var i = 0; i < currentTimeline.length; i++) {
+        var t = currentTimeline[i];
+        var tr = document.createElement('tr');
+        tr.className = 'event-row';
+        tr.setAttribute('data-index', String(i));
+        tr.innerHTML = '<td>' + t.key + '</td><td>' + t.localTime + '</td><td>' + t.detail + '</td><td class="status">Pendiente</td>';
+        timelineBody.appendChild(tr);
+      }
+    }
+
+    function updateRows() {
+      var rows = document.querySelectorAll('.event-row');
+      for (var i = 0; i < rows.length; i++) {
+        rows[i].classList.remove('active', 'done');
+        var status = rows[i].querySelector('.status');
+        if (i < simIndex) {
+          rows[i].classList.add('done');
+          status.textContent = 'Completado';
+        } else if (i === simIndex) {
+          rows[i].classList.add('active');
+          status.textContent = 'En curso';
+        } else {
+          status.textContent = 'Pendiente';
+        }
+      }
+      var pct = simIndex < 0 ? 0 : ((simIndex + 1) / currentTimeline.length) * 100;
+      progressBar.style.width = pct + '%';
+    }
+
+    function updateNowClock() {
+      kNow.textContent = formatInTZ(new Date(), timezone);
+    }
+
+    function dayOfYear(date) {
+      var start = new Date(date.getFullYear(), 0, 0);
+      var diff = date - start;
+      var oneDay = 1000 * 60 * 60 * 24;
+      return Math.floor(diff / oneDay);
+    }
+
+    function getLatLon() {
+      return parseCoords(coordsInput.value) || { lat: 42.526484, lon: -4.131424 };
+    }
+
+    function getSolarPosition(date, lat, lon) {
+      var rad = Math.PI / 180;
+      var deg = 180 / Math.PI;
+      var N = dayOfYear(date);
+      var hours = date.getUTCHours() + date.getUTCMinutes() / 60 + date.getUTCSeconds() / 3600;
+      var gamma = 2 * Math.PI / 365 * (N - 1 + (hours - 12) / 24);
+      var decl = 0.006918 - 0.399912 * Math.cos(gamma) + 0.070257 * Math.sin(gamma) - 0.006758 * Math.cos(2 * gamma) + 0.000907 * Math.sin(2 * gamma) - 0.002697 * Math.cos(3 * gamma) + 0.00148 * Math.sin(3 * gamma);
+      var eqtime = 229.18 * (0.000075 + 0.001868 * Math.cos(gamma) - 0.032077 * Math.sin(gamma) - 0.014615 * Math.cos(2 * gamma) - 0.040849 * Math.sin(2 * gamma));
+      var timeOffset = eqtime + 4 * lon;
+      var tst = (date.getUTCHours() * 60 + date.getUTCMinutes() + date.getUTCSeconds() / 60 + timeOffset) % 1440;
+      var ha = tst / 4 - 180;
+      if (ha < -180) ha += 360;
+      var haRad = ha * rad;
+      var latRad = lat * rad;
+      var cosZenith = Math.sin(latRad) * Math.sin(decl) + Math.cos(latRad) * Math.cos(decl) * Math.cos(haRad);
+      var zenith = Math.acos(Math.max(-1, Math.min(1, cosZenith)));
+      var altitude = 90 - zenith * deg;
+      var az = Math.atan2(Math.sin(haRad), Math.cos(haRad) * Math.sin(latRad) - Math.tan(decl) * Math.cos(latRad)) * deg + 180;
+      return { altitude: altitude, azimuth: (az + 360) % 360 };
+    }
+
+    function renderMiniMap(azimuth, altitude) {
+      var visible = altitude > 0;
+      miniMap.innerHTML = '<svg viewBox="0 0 180 180" width="150" height="150" aria-label="Mini mapa solar">' +
+        '<circle cx="90" cy="90" r="70" fill="#ffffff" stroke="#b8c6e3" stroke-width="2" />' +
+        '<text x="90" y="18" text-anchor="middle" fill="#3a4666" font-size="12">N</text>' +
+        '<text x="162" y="94" text-anchor="middle" fill="#3a4666" font-size="12">E</text>' +
+        '<text x="90" y="170" text-anchor="middle" fill="#3a4666" font-size="12">S</text>' +
+        '<text x="18" y="94" text-anchor="middle" fill="#3a4666" font-size="12">O</text>' +
+        '<line x1="90" y1="90" x2="90" y2="24" stroke="#8a97b8" />' +
+        '<line x1="90" y1="90" x2="156" y2="90" stroke="#8a97b8" />' +
+        '<line x1="90" y1="90" x2="90" y2="156" stroke="#8a97b8" />' +
+        '<line x1="90" y1="90" x2="24" y2="90" stroke="#8a97b8" />' +
+        (visible ? '<g transform="rotate(' + azimuth + ' 90 90)"><line x1="90" y1="90" x2="90" y2="30" stroke="#ffd76a" stroke-width="4" /><circle cx="90" cy="30" r="8" fill="#ffd76a" /></g>' : '<text x="90" y="95" text-anchor="middle" fill="#6c7899" font-size="12">Bajo horizonte</text>') +
+        '</svg>';
+    }
+
+    function updateSolarInfo(date) {
+      var coords = getLatLon();
+      var solar = getSolarPosition(date, coords.lat, coords.lon);
+      kAlt.textContent = solar.altitude.toFixed(1) + '°';
+      kAz.textContent = solar.azimuth.toFixed(1) + '°';
+      renderMiniMap(solar.azimuth, solar.altitude);
+    }
+
+    function updateLocationMap() {
+      var coords = getLatLon();
+      if (!locationMap || typeof L === 'undefined') return;
+      if (!leafletMap) {
+        leafletMap = L.map(locationMap, {
+          zoomControl: true,
+          attributionControl: true
+        }).setView([coords.lat, coords.lon], 10);
+
+        L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png', {
+          maxZoom: 19,
+          attribution: '&copy; OpenStreetMap contributors'
+        }).addTo(leafletMap);
+
+        leafletMarker = L.marker([coords.lat, coords.lon]).addTo(leafletMap);
+      } else {
+        leafletMap.setView([coords.lat, coords.lon], leafletMap.getZoom() || 10);
+        if (leafletMarker) {
+          leafletMarker.setLatLng([coords.lat, coords.lon]);
+        } else {
+          leafletMarker = L.marker([coords.lat, coords.lon]).addTo(leafletMap);
+        }
+      }
+      if (leafletMarker) {
+        leafletMarker.bindPopup('Ubicación: ' + coords.lat.toFixed(6) + ', ' + coords.lon.toFixed(6));
+      }
+      setTimeout(function () {
+        if (leafletMap) leafletMap.invalidateSize();
+      }, 50);
+    }
+
+    function isRealEclipseDay() {
+      var now = new Date();
+      return now.getFullYear() === 2026 && now.getMonth() === 7 && now.getDate() === 12;
+    }
+
+    function formatDuration(ms) {
+      var totalSec = Math.max(0, Math.floor(ms / 1000));
+      var mm = String(Math.floor(totalSec / 60)).padStart(2, '0');
+      var ss = String(totalSec % 60).padStart(2, '0');
+      return mm + ':' + ss;
+    }
+
+    function updateRealTimeView() {
+      if (!currentTimeline.length) return;
+      var now = new Date();
+      updateSolarInfo(now);
+      var idx = -1;
+      for (var i = 0; i < currentTimeline.length - 1; i++) {
+        if (now >= currentTimeline[i].date && now < currentTimeline[i + 1].date) { idx = i; break; }
+      }
+      if (now >= currentTimeline[currentTimeline.length - 1].date) idx = currentTimeline.length - 1;
+      if (now < currentTimeline[0].date) idx = -1;
+      simIndex = idx;
+      if (idx < 0) {
+        liveState.textContent = 'Esperando eclipse real';
+        setPhaseVisual('Previo', 0, currentTimeline[0].key + ' — ' + currentTimeline[0].localTime, 'entry');
+        nextVoiceEl.innerHTML = '<strong>' + currentTimeline[0].key + '</strong> — ' + currentTimeline[0].detail;
+        currentBlockEl.innerHTML = '<strong>Estado actual:</strong> Antes del primer contacto';
+        countdownEl.textContent = formatDuration(currentTimeline[0].date.getTime() - now.getTime());
+        updateRows();
+        return;
+      }
+      var current = currentTimeline[idx];
+      var next = idx < currentTimeline.length - 1 ? currentTimeline[idx + 1] : null;
+      var pct = current.pct;
+      var side = current.side;
+      if (next) {
+        var total = next.date.getTime() - current.date.getTime();
+        var elapsed = now.getTime() - current.date.getTime();
+        var ratio = total <= 0 ? 1 : Math.max(0, Math.min(1, elapsed / total));
+        pct = current.pct + (next.pct - current.pct) * ratio;
+        side = ratio < 0.5 ? current.side : next.side;
+      }
+      setPhaseVisual(current.key, pct, next ? next.key + ' — ' + next.localTime : 'Sin siguiente hito', side);
+      currentBlockEl.innerHTML = '<strong>Estado actual:</strong> ' + current.key + ' — ' + current.detail;
+      nextVoiceEl.innerHTML = next ? '<strong>' + next.key + '</strong> — ' + next.detail : '<strong>Fin</strong> — Eclipse completado';
+      countdownEl.textContent = next ? formatDuration(next.date.getTime() - now.getTime()) : '00:00';
+      liveState.textContent = 'Tiempo real';
+      updateRows();
+      var totalMs = currentTimeline[currentTimeline.length - 1].date.getTime() - currentTimeline[0].date.getTime();
+      var elapsedMs = Math.max(0, Math.min(totalMs, now.getTime() - currentTimeline[0].date.getTime()));
+      progressBar.style.width = (elapsedMs / totalMs * 100) + '%';
+      if (lastAnnouncedKey !== current.key && voiceMap[current.key]) {
+        speak(voiceMap[current.key]);
+        lastAnnouncedKey = current.key;
+      }
+    }
+
+    function getInterpolatedPct(nowMs, index) {
+      if (index < 0 || index >= currentTimeline.length) return 0;
+      if (index === currentTimeline.length - 1) return currentTimeline[index].pct;
+      var a = currentTimeline[index];
+      var b = currentTimeline[index + 1];
+      var total = b.date.getTime() - a.date.getTime();
+      if (total <= 0) return a.pct;
+      var elapsed = nowMs - phaseStartMs;
+      var phaseDuration = phaseEndMs - phaseStartMs;
+      var ratio = phaseDuration <= 0 ? 1 : Math.max(0, Math.min(1, elapsed / phaseDuration));
+      return a.pct + (b.pct - a.pct) * ratio;
+    }
+
+    function getInterpolatedSide(nowMs, index) {
+      if (index < 0 || index >= currentTimeline.length) return 'entry';
+      var current = currentTimeline[index];
+      var next = index < currentTimeline.length - 1 ? currentTimeline[index + 1] : current;
+      if (current.side === next.side) return current.side;
+      var elapsed = nowMs - phaseStartMs;
+      var phaseDuration = phaseEndMs - phaseStartMs;
+      var ratio = phaseDuration <= 0 ? 1 : Math.max(0, Math.min(1, elapsed / phaseDuration));
+      return ratio < 0.5 ? current.side : next.side;
+    }
+
+    function updateSimulationView(forceVoice) {
+      if (!currentTimeline.length || simIndex < 0 || simIndex >= currentTimeline.length) return;
+      var nowMs = Date.now();
+      var current = currentTimeline[simIndex];
+      var next = currentTimeline[simIndex + 1];
+      var interpolatedPct = getInterpolatedPct(nowMs, simIndex);
+      var interpolatedSide = getInterpolatedSide(nowMs, simIndex);
+      var remainingMs = Math.max(0, phaseEndMs - nowMs);
+      var mm = String(Math.floor(remainingMs / 60000)).padStart(2, '0');
+      var ss = String(Math.floor((remainingMs % 60000) / 1000)).padStart(2, '0');
+      countdownEl.textContent = mm + ':' + ss;
+      nextVoiceEl.innerHTML = next ? '<strong>' + next.key + '</strong> — ' + next.detail : '<strong>Fin</strong> — Sin más hitos';
+      currentBlockEl.innerHTML = '<strong>Estado actual:</strong> ' + current.key + ' — ' + current.detail;
+      liveState.textContent = 'En ' + current.key;
+      setPhaseVisual(current.key, interpolatedPct, next ? next.key + ' — ' + next.localTime : 'Sin siguiente hito', interpolatedSide);
+      var simDate = new Date(current.date.getTime());
+      if (next && phaseStartMs && phaseEndMs && phaseEndMs > phaseStartMs) {
+        var simRatio = Math.max(0, Math.min(1, (nowMs - phaseStartMs) / (phaseEndMs - phaseStartMs)));
+        simDate = new Date(current.date.getTime() + simRatio * (next.date.getTime() - current.date.getTime()));
+      }
+      updateSolarInfo(simDate);
+      updateRows();
+
+      if ((forceVoice || lastAnnouncedKey !== current.key) && voiceMap[current.key]) {
+        speak(voiceMap[current.key]);
+        lastAnnouncedKey = current.key;
+      }
+    }
+
+    function startPhase(index, forceVoice) {
+      simIndex = index;
+      var current = currentTimeline[simIndex];
+      var next = currentTimeline[simIndex + 1];
+      phaseStartMs = Date.now();
+      if (next) {
+        var durationMs = Math.max(4000, Math.min(12000, (next.date.getTime() - current.date.getTime()) * 80));
+        phaseEndMs = phaseStartMs + durationMs;
+      } else {
+        phaseEndMs = phaseStartMs + 5000;
+      }
+      updateSimulationView(forceVoice);
+    }
+
+    function finishSimulation() {
+      clearInterval(interval);
+      running = false;
+      liveState.textContent = 'Simulación completada';
+      playBtn.textContent = '▶ Reproducir de nuevo';
+      countdownEl.textContent = '00:00';
+      nextVoiceEl.innerHTML = '<strong>Fin</strong> — Eclipse completado';
+      currentBlockEl.innerHTML = '<strong>Estado actual:</strong> Recorrido finalizado';
+      updateRows();
+      speak('Eclipse sequence completed');
+    }
+
+    function tick() {
+      if (!running) return;
+      if (simIndex < 0) {
+        startPhase(0, true);
+        return;
+      }
+      var nowMs = Date.now();
+      if (nowMs >= phaseEndMs) {
+        if (simIndex + 1 >= currentTimeline.length) {
+          finishSimulation();
+          return;
+        }
+        startPhase(simIndex + 1, true);
+        return;
+      }
+      updateSimulationView(false);
+    }
+
+    function recalc() {
+      var coords = parseCoords(coordsInput.value) || { lat: 42.526484, lon: -4.131424 };
+      var eclipseVisible = isEclipseVisibleAtCoords(coords.lat, coords.lon);
+      timezone = detectTimeZone(coords.lat, coords.lon);
+      tzInfo.textContent = 'Zona horaria detectada: ' + timezone;
+      if (!eclipseVisible) {
+        zoneWarning.style.display = 'block';
+        zoneWarning.textContent = 'No habrá eclipse visible en esa zona el 12 de agosto de 2026. Introduce unas coordenadas dentro de la zona de visibilidad para usar esta app.';
+      } else {
+        zoneWarning.style.display = 'none';
+        zoneWarning.textContent = '';
+      }
+      currentTimeline = createTimelineForTZ(timezone);
+      useRealTimeMode = isRealEclipseDay();
+      simIndex = -1;
+      running = false;
+      clearInterval(interval);
+      phaseStartMs = null;
+      phaseEndMs = null;
+      lastAnnouncedKey = '';
+      playBtn.textContent = '▶ Iniciar simulación';
+      liveState.textContent = useRealTimeMode ? 'Tiempo real disponible' : 'En espera';
+      countdownEl.textContent = '00:00';
+      nextVoiceEl.innerHTML = '<strong>' + currentTimeline[0].key + '</strong> — ' + currentTimeline[0].detail;
+      currentBlockEl.innerHTML = '<strong>Estado actual:</strong> Preparado para iniciar';
+      renderTimeline();
+      updateRows();
+      setPhaseVisual(eclipseVisible ? 'Preparado' : 'Sin eclipse', 0, eclipseVisible ? currentTimeline[0].key + ' — ' + currentTimeline[0].localTime : 'Fuera de la zona de visibilidad', 'entry');
+      updateNowClock();
+      updateSolarInfo(new Date());
+      updateLocationMap();
+      modeInfo.textContent = useRealTimeMode ? 'Modo actual: tiempo real activo (12 de agosto de 2026). La app sigue el reloj del móvil.' : 'Modo actual: simulación manual. El 12 de agosto de 2026 se activará automáticamente el modo tiempo real.';
+      if (useRealTimeMode && eclipseVisible) updateRealTimeView();
+    }
+
+    calcBtn.addEventListener('click', function () {
+      try {
+        recalc();
+      } catch (err) {
+        liveState.textContent = 'Error al calcular';
+        zoneWarning.style.display = 'block';
+        zoneWarning.textContent = 'No se han podido calcular las fases con esas coordenadas. Revisa el formato, por ejemplo: 42.526484, -4.131424';
+        console.error(err);
+      }
+    });
+    playBtn.addEventListener('click', function () {
+      var coords = parseCoords(coordsInput.value) || { lat: 42.526484, lon: -4.131424 };
+      if (!isEclipseVisibleAtCoords(coords.lat, coords.lon)) {
+        liveState.textContent = 'Sin eclipse en esa zona';
+        zoneWarning.style.display = 'block';
+        zoneWarning.textContent = 'No habrá eclipse visible en esa zona el 12 de agosto de 2026. Cambia las coordenadas para iniciar la simulación.';
+        return;
+      }
+      if (useRealTimeMode) {
+        updateRealTimeView();
+        return;
+      }
+      if (!running) {
+        if (simIndex >= currentTimeline.length - 1 && simIndex !== -1) {
+          simIndex = -1;
+          lastAnnouncedKey = '';
+        }
+        running = true;
+        playBtn.textContent = '⏸ Pausar';
+        if (simIndex === -1) {
+          startPhase(0, true);
+        }
+        clearInterval(interval);
+        interval = setInterval(tick, 100);
+      } else {
+        running = false;
+        clearInterval(interval);
+        playBtn.textContent = '▶ Reanudar';
+        liveState.textContent = 'Pausado';
+      }
+    });
+
+    recalc();
+    clearInterval(clockInterval);
+    clockInterval = setInterval(function () {
+      updateNowClock();
+      if (useRealTimeMode) updateRealTimeView();
+    }, 1000);
+  </script>
+  </body>
+</html>
