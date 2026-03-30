@@ -364,6 +364,7 @@
       function scrollActiveRowIntoView() {
         const active = timelineBody.querySelector('.event-row.active');
         if (!active || !timelineWrap) return;
+        const wrapTop = timelineWrap.scrollTop;
         const wrapHeight = timelineWrap.clientHeight;
         const rowTop = active.offsetTop;
         const rowHeight = active.offsetHeight;
